@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
+          integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <style>
+        .loader,
+        .loader:before,
+        .loader:after {
+            border-radius: 50%;
+        }
+
+        .loader {
+            color: #ffffff;
+            font-size: 11px;
+            text-indent: -99999em;
+            margin: 55px auto;
+            position: relative;
+            width: 10em;
+            height: 10em;
+            box-shadow: inset 0 0 0 1em;
+            -webkit-transform: translateZ(0);
+            -ms-transform: translateZ(0);
+            transform: translateZ(0);
+        }
+
+        .loader:before,
+        .loader:after {
+            position: absolute;
+            content: '';
+        }
+
+        .loader:before {
+            width: 5.2em;
+            height: 10.2em;
+            background: #0dc5c1;
+            border-radius: 10.2em 0 0 10.2em;
+            top: -0.1em;
+            left: -0.1em;
+            -webkit-transform-origin: 5.1em 5.1em;
+            transform-origin: 5.1em 5.1em;
+            -webkit-animation: load2 2s infinite ease 1.5s;
+            animation: load2 2s infinite ease 1.5s;
+        }
+
+        .loader:after {
+            width: 5.2em;
+            height: 10.2em;
+            background: #0dc5c1;
+            border-radius: 0 10.2em 10.2em 0;
+            top: -0.1em;
+            left: 4.9em;
+            -webkit-transform-origin: 0.1em 5.1em;
+            transform-origin: 0.1em 5.1em;
+            -webkit-animation: load2 2s infinite ease;
+            animation: load2 2s infinite ease;
+        }
+
+        @-webkit-keyframes load2 {
+            0% {
+                -webkit-transform: rotate(0deg);
+                transform: rotate(0deg);
+            }
+            100% {
+                -webkit-transform: rotate(360deg);
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes load2 {
+            0% {
+                -webkit-transform: rotate(0deg);
+                transform: rotate(0deg);
+            }
+            100% {
+                -webkit-transform: rotate(360deg);
+                transform: rotate(360deg);
+            }
+        }
+
+        #preloader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.3);
+            display: none;
+            z-index: 9999;
+        <!-- по умолчанию прячем элемент -->
+        }
+    </style>
+</head>
+<body>
+<div id="preloader">
+    <div class="loader"></div>
+</div>
+<header>
+    <h1 class="text-dark bg-light bg-gradient fs-3 p-3">Cocktail search</h1>
+</header>
+<div class="container" id="container">
+    <nav class="navbar navbar-light bg-light mb-5">
+        <div class="container-fluid">
+            <form class="d-flex" id="searchForm">
+                <input class="form-control me-2" id="searchInput" type="search" placeholder="Search by Cocktail"
+                       aria-label="Search">
+                <button class="btn btn-outline-success" type="submit">Search</button>
+            </form>
+        </div>
+    </nav>
+    <nav class="navbar navbar-light bg-light mb-5">
+        <div class="container-fluid">
+            <form class="d-flex" id="searchIngredientForm">
+                <input class="form-control me-2" id="searchIngredientInput" type="search" placeholder="Search by Ingredient"
+                       aria-label="Search">
+                <button class="btn btn-outline-success" type="submit">Search</button>
+            </form>
+        </div>
+    </nav>
+    <div class="modal fade" id="cocktailInfoModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="cocktailModalLabel">Cocktail info</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="cocktailInfoBody">
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"
+        integrity="sha384-IQsoLXl5PILFhosVNubq5LC7Qb9DXgDA9i+tQ8Zj3iwWAwPtgFTxbJ8NT4GN1R8p"
+        crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.min.js"
+        integrity="sha384-cVKIPhGWiC2Al4u+LWgxfKTRIcfu0JTxR+EQDz/bgldoEyl4H0zUF0QKbrJ0EcQF"
+        crossorigin="anonymous"></script>
+<script>
+    const checkInput = (inputValue, parseData = 2) => {
+        if (inputValue === '') {
+            document.getElementById('preloader').style.display = 'none';
+            alert("Error!Please enter input value");
+            return false;
+        }
+        if (parseData['drinks'] === null) {
+            document.getElementById('preloader').style.display = 'none';
+            alert('Error, There is no that value.Please input another name');
+            return false;
+        }
+    };
+    const getIngredientData = async cocktail => {
+        const ingredientData = await fetch('https://www.thecocktaildb.com/api/json/v1/1/search.php?s=' + cocktail['strDrink']);
+        const parseIngredientData = await ingredientData.json();
+        return parseIngredientData['drinks'][0];
+    };
+    const createIngredients = cocktail => {
+        const ingredients = document.createElement('div');
+        for (let i = 1; i <= 15; i++) {
+            const ingredient = document.createElement('div');
+            ingredient.setAttribute('id', cocktail['strIngredient'+ i])
+            ingredient.classList.add('row', 'align-items-center');
+            if (!cocktail['strIngredient' + i]) {
+                break;
+            }
+            if (!cocktail['strMeasure' + i]) {
+                break;
+            }
+            ingredient.innerHTML = `
+            <div class="img-block col-6">
+                <img src="https://www.thecocktaildb.com/images/ingredients/${cocktail['strIngredient' + i]}-Small.png" class="border" width="100px" height="100px">
+            </div>
+            <p class="col-6"><b>${cocktail['strIngredient' + i]}</b> (${cocktail['strMeasure' + i]})</p>
+            `;
+            ingredients.append(ingredient);
+
+        }
+
+        return ingredients;
+    };
+    const createCocktailInfoBlock = cocktail => {
+        document.getElementById('cocktailInfoModal').style.display = 'block';
+        const cocktailInfo = document.createElement('div');
+        cocktailInfo.setAttribute('id', 'cocktailInfo');
+        const ingredients = createIngredients(cocktail);
+        cocktailInfo.innerHTML = `
+        <div class="ingredientBlock">
+        <p>Ingredients:</p>
+        ${ingredients.innerHTML}
+        </div>
+        <div class="instructionBlock">
+        <p>Instructions:</p>
+        <p>${cocktail['strInstructions']}</p>
+        </div>
+        <div>
+        <p><b>Alcoholic:</b> ${cocktail['strAlcoholic']}</p>
+        <p><b>Category:</b> ${cocktail['strCategory']}</p>
+        <p><b>Glass:</b> ${cocktail['strGlass']}</p>
+        </div>
+        `;
+        document.getElementById('cocktailInfoBody').innerHTML = '';
+        document.getElementById('cocktailInfoBody').append(cocktailInfo);
+        for (let i = 0; i < 15; i++) {
+            const ingredient = document.getElementById(cocktail['strIngredient' + i]);
+            document.getElementById().addEventListener('click', () => {
+                console.log('privet');
+            });
+        }
+    };
+    const createCardCocktail = cocktails => {
+        if (document.getElementById('cocktailsBlock')) {
+            document.getElementById('cocktailsBlock').remove();
+        }
+        const cocktailsBlock = document.createElement('div');
+        cocktailsBlock.className = 'row';
+        cocktailsBlock.setAttribute('id', 'cocktailsBlock');
+        cocktailsBlock.style.justifyContent = 'space-between';
+        cocktails.forEach(cocktail => {
+            const cardCocktail = document.createElement('div');
+            cardCocktail.classList.add('cardCocktail', 'col-4', 'mb-4');
+            cardCocktail.setAttribute('data-bs-toggle', 'modal');
+            cardCocktail.setAttribute('data-bs-target', '#cocktailInfoModal');
+            cardCocktail.style.cursor = 'pointer';
+            cardCocktail.innerHTML = `
+                      <img src="${cocktail['strDrinkThumb']}" class="card-img-top" alt="...">
+                      <div class="card-body">
+                        <p class="card-text">${cocktail['strDrink']}</p>
+                      </div>
+                `;
+            cocktailsBlock.append(cardCocktail);
+            cardCocktail.addEventListener('click', async () => {
+                document.getElementById('preloader').style.display = 'block';
+                if (!cocktail['strIngredient1']) {
+                    createCocktailInfoBlock(await getIngredientData(cocktail));
+                }else {
+                    createCocktailInfoBlock(cocktail);
+                }
+                document.getElementById('preloader').style.display = 'none';
+            });
+        });
+        document.getElementById('container').append(cocktailsBlock);
+        document.getElementById('preloader').style.display = 'none';
+    };
+    const run = async () => {
+        document.getElementById('searchForm').addEventListener('submit', async e => {
+            e.preventDefault();
+            document.getElementById('searchIngredientInput').value = '';
+            document.getElementById('preloader').style.display = 'block';
+            const cocktailNameFromUser = document.getElementById('searchInput').value;
+            if (checkInput(cocktailNameFromUser) === false) return;
+            const cocktailData = await fetch('https://www.thecocktaildb.com/api/json/v1/1/search.php?s=' + cocktailNameFromUser);
+            const parseCocktailData = await cocktailData.json();
+            if (checkInput(cocktailNameFromUser, parseCocktailData) === false) return;
+            createCardCocktail(parseCocktailData['drinks']);
+
+        });
+        document.getElementById('searchIngredientForm').addEventListener('submit', async e => {
+            e.preventDefault();
+            document.getElementById('searchInput').value = '';
+            document.getElementById('preloader').style.display = 'block';
+            const ingredientNameFromUser = document.getElementById('searchIngredientInput').value;
+            if (checkInput(ingredientNameFromUser) === false) return;
+            const ingredientData = await fetch('https://www.thecocktaildb.com/api/json/v1/1/filter.php?i=' + ingredientNameFromUser);
+            let parseIngredientData;
+            try {
+                parseIngredientData = await ingredientData.json();
+            } catch (e) {
+                document.getElementById('preloader').style.display = 'none';
+                alert('Error, There is no that value.Please input another name');
+                return;
+            }
+            document.getElementById('preloader').style.display = 'none';
+            if (checkInput(ingredientNameFromUser, parseIngredientData) === false) return;
+            createCardCocktail(parseIngredientData['drinks']);
+        });
+    };
+    run();
+
+</script>
+</body>
+</html>
